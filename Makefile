@@ -5,10 +5,18 @@ ifndef CC
 endif
 src=src/base64.c
 objects=$(src:.c=.o)
-base64=base64.a
+lib=base64.a
+main=base64
 
-$(base64): $(objects)
+$(main): src/main.c $(lib)
+	clang $(CFLAGS) -o $@ $^
+
+$(lib): $(objects)
 	ar rcs $@ $^
 
 src/%.o: src/%.c
-	$(CC) -c -o $@ $< $(CFLAGS)
+	clang $(CFLAGS) -c -o $@ $<
+
+clean:
+	rm -f $(main) $(lib) $(objects)
+.PHONY: clean
