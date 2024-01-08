@@ -1,3 +1,5 @@
 *.a
 *.o
-base64
+b64_demo
+.cache
+compile_commands.json

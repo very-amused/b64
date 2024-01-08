@@ -42,14 +42,14 @@ static void encode_group(const unsigned char *data, const uint8_t data_len, char
 		result[1] = STD_ENCODING[data[0] << 4 & 0x30];
 		return;
 	}
-	result[1] = STD_ENCODING[data[0] << 4 & 0x30 | data[1] >> 4];
+	result[1] = STD_ENCODING[(data[0] << 4 & 0x30) | data[1] >> 4];
 
 	// Byte 3
 	if (data_len == 2) {
 		result[2] = STD_ENCODING[data[1] << 2 & 0x3C];
 		return;
 	}
-	result[2] = STD_ENCODING[data[1] << 2 & 0x3C | data[2] >> 6];
+	result[2] = STD_ENCODING[(data[1] << 2 & 0x3C) | data[2] >> 6];
 
 	// Byte 4
 	result[3] = STD_ENCODING[data[2] & 0x3F];
@@ -58,6 +58,34 @@ static void encode_group(const unsigned char *data, const uint8_t data_len, char
 // Base64 ASCII to index.
 // Decode a single character of base64 to 6 bits [0, 63].
 // Returns 1 if an invalid input character is supplied
+static int _atoi(const char encoded, unsigned char *index);
+
+// Decode up to 4 base64 characters to result
+static int decode_group(const char *encoded, unsigned char *result, const uint8_t result_len) {
+	unsigned char indexes[result_len + 1];
+	for (uint8_t i = 0; i < result_len + 1; i++) {
+		if (_atoi(encoded[i], &indexes[i]) != 0) {
+			return 1;
+		}
+	}
+
+	// Byte 1
+	result[0] = indexes[0] << 2 | indexes[1] >> 4;
+	if (result_len == 1) {
+		return 0;
+	}
+
+	// Byte 2
+	result[1] = indexes[1] << 4 | indexes[2] >> 2;
+	if (result_len == 2) {
+		return 0;
+	}
+
+	// Byte 3
+	result[2] = indexes[2] << 6 | indexes[3];
+	return 0;
+}
+
 static int _atoi(const char encoded, unsigned char *index) {
 		if (encoded >= '0' && encoded <= '9') {
 			// 0-9
@@ -79,32 +107,6 @@ static int _atoi(const char encoded, unsigned char *index) {
 			return 1;
 		}
 		return 0;
-}
-
-// Decode up to 4 base64 characters to result
-static int decode_group(const char *encoded, unsigned char *result, const uint8_t result_len) {
-	unsigned char indexes[result_len + 1];
-	for (uint64_t i = 0; i < result_len + 1; i++) {
-		if (_atoi(encoded[i], &indexes[i]) != 0) {
-			return 1;
-		}
-	}
-
-	// Byte 1
-	result[0] = indexes[0] << 2 | indexes[1] >> 4;
-	if (result_len == 1) {
-		return 0;
-	}
-
-	// Byte 2
-	result[1] = indexes[1] << 4 | indexes[2] >> 2;
-	if (result_len == 2) {
-		return 0;
-	}
-
-	// Byte 3
-	result[2] = indexes[2] << 6 | indexes[3];
-	return 0;
 }
 
 int b64_encode(const unsigned char *data, const size_t data_len, char *result, const size_t result_len) {
