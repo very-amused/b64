@@ -8,19 +8,13 @@ const size_t b64_encoded_len(const size_t len) {
 	return ((len / 3) * 4) + (len % 3 > 0 ? 4 : 0);
 }
 
-static inline size_t b64_decoded_maxlen(const size_t encoded_len) {
-	return ((encoded_len/ 4) * 3) + // Each full group of 4 encoded -> 4 bytes
-		(encoded_len % 4 > 0 ? encoded_len % 4 - 1 : 0); // Add trailing bytes
+const size_t b64_nopadding_encoded_len(const size_t len) {
+	return ((len / 3) * 4) + (len % 3 > 0 ? (len % 3) + 1 : 0);
 }
 
-const size_t b64_decoded_len(const char *encoded, const size_t encoded_len) {
-	size_t decoded_len = b64_decoded_maxlen(encoded_len);
-	for (size_t i = encoded_len - 2; i < encoded_len; i++) {
-		if (encoded[i] == PADDING) {
-			decoded_len--;
-		}
-	}
-	return decoded_len;
+static inline size_t b64_decoded_maxlen(const size_t encoded_len) {
+	return ((encoded_len / 4) * 3) + // Each full group of 4 encoded -> 3 bytes
+		(encoded_len % 4 > 0 ? encoded_len % 4 - 1 : 0); // Add trailing bytes
 }
 
 // Reduce encoded_len to exclude end padding characters
@@ -30,6 +24,12 @@ static void b64_trim_padding(const char *encoded, size_t *encoded_len) {
 			(*encoded_len)--;
 		}
 	}
+}
+
+const size_t b64_decoded_len(const char *encoded, const size_t encoded_len) {
+	size_t decoded_len = b64_decoded_maxlen(encoded_len);
+	b64_trim_padding(encoded, &decoded_len);
+	return decoded_len;
 }
 
 // Encode up to 3 bytes from src into dst
@@ -132,6 +132,31 @@ int b64_encode(const unsigned char *data, const size_t data_len, char *result, c
 	case 2:
 		encode_group(data + (data_len - 2), 2, result + (result_len - 4));
 		result[result_len - 1] = PADDING;
+	}
+
+	return 0;
+}
+
+int b64_nopadding_encode(const unsigned char *data, const size_t data_len, char *result, const size_t result_len) {
+	if (result_len != b64_nopadding_encoded_len(data_len)) {
+		return 1;
+	}
+
+	size_t data_offset = 0, // Offset from beinning of data
+				result_offset = 0; // Offset from beginning of result
+	// Encode each full group of 3 bytes -> 4 chars
+	for (; data_offset < data_len - 2; data_offset += 3, result_offset += 4) {
+		encode_group(data + data_offset, 3, result + result_offset);
+	}
+
+	// Encode trailing bytes
+	switch (data_len % 3) {
+	case 1:
+		encode_group(data + (data_len - 1), 1, result + (result_len - 2));
+		break;
+
+	case 2:
+		encode_group(data + (data_len - 2), 2, result + (result_len - 3));
 	}
 
 	return 0;

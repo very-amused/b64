@@ -10,11 +10,11 @@ int main() {
 	data_len--; // Disregard trailing newline
 	data[data_len] = '\0';
 
-	const size_t encoded_len = b64_encoded_len(data_len);
+	const size_t encoded_len = b64_nopadding_encoded_len(data_len);
 	char *encoded = malloc(encoded_len * sizeof(char) + 1);
 	encoded[encoded_len] = '\0';
 	int result;
-	result = b64_encode((unsigned char *)data, data_len, encoded, encoded_len);
+	result = b64_nopadding_encode((unsigned char *)data, data_len, encoded, encoded_len);
 	if (result != 0) {
 		goto end;
 	}
