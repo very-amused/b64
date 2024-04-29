@@ -11,7 +11,7 @@ b64 can be consumed by running `make` to build a static archive at `b64.a`. Alte
 ## Project Inclusion
 b64 can be added to any Git-managed project as a submodule.
 ```sh
-git submodule add https://gitlab.com/very-amused/b64.git b64
+git submodule add https://github.com/very-amused/b64 b64
 ```
 
 ## Intellisense (clangd)
